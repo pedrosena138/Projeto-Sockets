@@ -1,6 +1,10 @@
 # Projeto-Sockets
-Chat P2P em python
+Projeto da cadeira IF975 - Redes de Computadores                                                                                           
+Curso de Sistemas de Informação                                                                                                           
+Centro de Informática - CIn                                                                                                               
+Universidade Federal de Pernambuco - UFPE
 
+## Chat P2P em python
 - Qualquer peer poderá criar uma sala. O peer criador da sala é chamado de admin.
     - Após criada a sala outros peers poderão pedir para entrar na sala.
     - Todas as mensagens enviadas na sala deverá ser enviada para todos os integrantes da sala.
