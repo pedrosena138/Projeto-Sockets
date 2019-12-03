@@ -147,8 +147,8 @@ class Connection(threading.Thread):
                         else:
                             print('Você foi banido da sala!')
                             self.myClient.banned = True
-            time.sleep(0.4)
-            self.lock.release()
+                time.sleep(0.4)
+                self.lock.release()
         except:
             pass
         self.connection.close()
