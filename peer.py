@@ -4,13 +4,13 @@ from client import *
 import time
 
 def startPeer():
-    global lock
+    global lock  # Variável utilizada para processar separadamente os pedidos na thread do servidor, evitando conflitos
     nick = input("Olá, qual é o seu nome? ")  # Nick do peer
     host = input(f'Qual é o seu ip, {nick}? ')  # Ip do peer
     port = int(input('Qual é a sua porta? '))  # Porta do peer
-    firstEntry = True
+    firstEntry = True  # Variável utilizada para criar o servidor apenas na primeira iteração, pois ao abrir outro servidor com a mesma porta um erro é gerado
     cmd = ''
-    roomsBanned = []
+    roomsBanned = []  # Lista de salas em que o cliente foi banido, evitando requests desnecessários
     while cmd != '3':
         cmd = input(
             "\nBem-vindo ao nosso app de mensagem, digite: \n1 - Se deseja criar uma sala\n2 - Se deseja se conectar a "
@@ -25,12 +25,12 @@ def startPeer():
                 server.start()
                 firstEntry = False
             else:
-                server.myClient = client
+                server.myClient = client  # A partir da segunda iteração no menu, somente o objeto client e a room são atualizados, já que o server foi inicializado anteriormente
                 server.room = room
 
             print(f'Sua sala foi criada no endereço {host} e porta {port}!!')
             time.sleep(0.01)
-            chekingMembers = CheckMembers(room, client)
+            chekingMembers = CheckMembers(room, client)  # Nesta thread, o adm checa continuamente se algum membro foi desconectado
             chekingMembers.start()
             client.chatPeer()
 
@@ -97,14 +97,13 @@ def startPeer():
                         client = Client(nick, host, port, adm, room)  # Inicializa sua classe cliente com seus dados e a Room criada
                         if firstEntry:
                             server = Server(nick, host, port, room, client, lock)  # Inicializa a thread server
-                            server.daemon = True
                             server.start()
                             firstEntry = False
                         else:
                             server.room = room
                             server.myClient = client
 
-                        chekingADM = CheckADM(room, nick, client)
+                        chekingADM = CheckADM(room, nick, client)  # Todos os usuários da sala checam continuamente se o adm não se desconectou de forma inesperada
                         chekingADM.start()
                         # A partir deste ponto o usuário já pode interagir com o chat
                         client.chatPeer()
@@ -116,7 +115,7 @@ def startPeer():
 
                     elif answer == 'Recusada, o ADM nao permitiu a sua entrada':
                         print(answer)
-                    else:
+                    else:  # Nesta condição, o adm da sala recusou e baniu o usuário de entrar na sala
                         roomsBanned.append((roomIP, roomPort))
                         print(answer)
                 except:
