@@ -16,7 +16,7 @@ class CheckADM(threading.Thread):  # Esta thread é executada por todos os membr
         while check:
             if not self.client.running or self.client.banned:
                 break
-            time.sleep(5)
+            time.sleep(2)
             try:
                 socket_ = socket(AF_INET, SOCK_STREAM)
                 hostADM, portADM = self.members[self.room.nickADM]
