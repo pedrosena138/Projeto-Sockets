@@ -2,12 +2,12 @@ from socket import *
 import threading
 import time
 
-class Connection(threading.Thread):
+class Connection(threading.Thread):  # Esta thread representa uma conexão do servidor com apenas um cliente
     def __init__(self, connection, room, senderIP, senderPort, myself, myClient, lock):
         threading.Thread.__init__(self)
         self.connection = connection  # Conexão aberta
         self.room = room  # Sala
-        self.lock = lock
+        self.lock = lock  # Utilizado para rodar a thread de forma separada das demais, evitando conflito com outras conexões
 
         self.senderIP = senderIP  # Ip do cliente que abriu a conexão
         self.senderPort = senderPort  # Porta do cliente
@@ -18,6 +18,7 @@ class Connection(threading.Thread):
         self.myClient = myClient  # Objeto cliente do peer servidor
 
     def run(self):
+        """Recebe os dados de uma conexão com um cliente"""
         try:
             data = self.connection.recv(1024)  # Este dado é referente ao tipo de mensagem que o cliente quer enviar
             if data:
@@ -29,10 +30,12 @@ class Connection(threading.Thread):
                         nickSender = str(self.connection.recv(1024), 'UTF-8')  # Recebe o nick do cliente
                         print(f'O usuário {nickSender} com ip {self.senderIP} e porta {self.senderPort} está pedindo para entrar na sala'
                         '\nDeseja aceitar a requisição? ')
-                        self.myClient.reqEntry = True
-                        while self.myClient.reqEntry:
+                        self.myClient.reqEntry = True  # Como o peer servidor está rodando o chat no momento, esta conexão vai requerir a entrada
+                        self.myClient.reqMessage = f'O usuário {nickSender} com ip {self.senderIP} e porta {self.senderPort} está pedindo para entrar na sala'
+                        '\nDeseja aceitar a requisição? '
+                        while self.myClient.reqEntry:  # Neste loop, a thread espera até que a entrada seja inserida dentro do menu da classe cliente do peer servidor
                             pass
-                        answer = self.myClient.entry
+                        answer = self.myClient.entry  # A resposta é coletada a partir do atributo entry da classe cliente do peer servidor
                         if answer.lower() in ['y', 'yes', 'sim', 's']:
                             print(f'{nickSender} entrou na sala.')
                             # Insere o cliente na sala e envia todas as informações a respeito da sala para ele
@@ -84,8 +87,10 @@ class Connection(threading.Thread):
                                 time.sleep(0.01)
                                 self.connection.sendall(str(person[2]).encode())  # port
                         else:
+                            print(f'Você recusou a entrada do usuário de ip {self.senderIP} e porta {self.senderPort}')
                             print('Deseja bani-lo?')
-                            self.myClient.reqEntry = True
+                            self.myClient.reqEntry = True  # Novamente, o peer servidor solicita dados de entrada da sua classe cliente
+                            self.myClient.reqMessage = 'Deseja bani-lo?'
                             while self.myClient.reqEntry == True:
                                 pass
                             answer = self.myClient.entry
@@ -95,6 +100,7 @@ class Connection(threading.Thread):
                                 print(f'Você baniu o usuário de ip {self.senderIP} e porta {self.senderPort}')
                                 self.connection.sendall('Seu pedido foi recusado e você foi banido'.encode())
                             else:
+                                print(f'Você não baniu o usuário de ip {self.senderIP} e porta {self.senderPort}')
                                 self.connection.sendall('Recusada, o ADM nao permitiu a sua entrada'.encode())
                     else:
                         self.connection.sendall('Nao sou o adm da sala'.encode())
@@ -107,13 +113,13 @@ class Connection(threading.Thread):
                     nick = str(self.connection.recv(1024), 'UTF-8')
                     ip = str(self.connection.recv(1024), 'UTF-8')
                     port = int(str(self.connection.recv(1024), 'UTF-8'))
-                    if data == 'add':
+                    if data == 'add':  # Atualiza uma adição de um novo membro
                         if nick != self.myNick:
                             self.room.queueADM.append(nick)
                             self.room.members[nick] = (ip, port)
                             self.room.ips[(ip, port)] = nick
                             print(f'{nick} entrou na sala.')
-                    elif data == 'remove':
+                    elif data == 'remove':  # Atualiza uma remoção de um membro
                         self.room.members.pop(nick)
                         self.room.ips.pop((ip, port))
                         self.room.queueADM.remove(nick)
@@ -122,12 +128,12 @@ class Connection(threading.Thread):
                         else:
                             print('Você foi removido da sala.')
                             self.myClient.running = False
-                    elif data == 'Disconnected':
+                    elif data == 'Disconnected':  # Atualiza uma desconexão de um membro
                         self.room.members.pop(nick)
                         self.room.ips.pop((ip, port))
                         self.room.queueADM.remove(nick)
                         print(f'O usuário {nick} foi desconectado')
-                    elif data == 'sair':
+                    elif data == 'sair':  # Atualiza uma saída de um membro
                         self.room.members.pop(nick)
                         self.room.ips.pop((ip, port))
                         try:  # Se fosse um adm daria erro, pois adm não fica nesta lista
@@ -135,9 +141,9 @@ class Connection(threading.Thread):
                         except:
                             pass
                         print(f'{nick} saiu da sala.')
-                    elif data == 'ban request':
+                    elif data == 'ban request':  # Atualiza um banimento de um membro que não estava na sala, ou seja, foi banido pedindo para entrar na sala
                         self.room.ban.append((ip, port))
-                    else:
+                    else:  # Atualiza um banimento de um membro que estava na sala
                         self.room.members.pop(nick)
                         self.room.ips.pop((ip, port))
                         self.room.ban.append((ip, port))
@@ -151,7 +157,7 @@ class Connection(threading.Thread):
                 self.lock.release()
         except:
             pass
-        self.connection.close()
+
 
 
 class Server(threading.Thread):
@@ -168,7 +174,7 @@ class Server(threading.Thread):
         socket_ = socket(AF_INET, SOCK_STREAM)
         socket_.bind((self.host, self.port))
         socket_.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        socket_.listen(5)
+        socket_.listen(1000)
         while True:
             connection, sender = socket_.accept()
             # print(f'Connected to client {sender}')
@@ -178,5 +184,4 @@ class Server(threading.Thread):
                 myself = (self.nick, self.host, self.port)
                 threadConnection = Connection(connection, self.room, senderIP, senderPort, myself, self.myClient,
                                               self.lock)
-                threadConnection.daemon = True
                 threadConnection.start()
