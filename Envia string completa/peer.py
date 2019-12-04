@@ -2,7 +2,6 @@ from server import *
 from room import *
 from client import *
 import time
-from random import randint
 
 def startPeer():
     global lock  # Variável utilizada para processar separadamente os pedidos na thread do servidor, evitando conflitos
@@ -51,8 +50,7 @@ def startPeer():
                         ('request\n' + nick + '\n').encode())  # Envia 'request' e nick para indicar que o peer quer fazer uma requisição para entrar na sala
                     print('Conectando...')
 
-                    answer = splitMessage(str(socket_.recv(1024), 'UTF-8'))  # Resposta do servidor, se foi aceito ou não na sala
-                    print(answer)
+                    answer = splitMessage(str(socket_.recv(1024), 'UTF-8'))  # Resposta do servidor, se foi aceito ou não na sala                    
                     if answer[0] == 'Voce foi aceito na sala':
                         print('Você entrou na sala!!')
                         # Todas as informações a seguir são da sala, enviadas pelo adm
