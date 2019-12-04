@@ -1,6 +1,6 @@
 import threading
 import time
-from socket import *
+import socket
 
 class CheckADM(threading.Thread):  # Esta thread é executada por todos os membros da sala, menos o adm. Ela checa se o adm se desconectou
     def __init__(self, room, myNick, client):
