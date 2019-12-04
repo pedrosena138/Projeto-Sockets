@@ -31,8 +31,7 @@ class Client():
         """Recebe um texto e um dicionário contendo pessoas. Envia o texto para cada pessoa do dicionário"""
         for person in dic:
             if person not in blackList:  # blackList indica as pessoas na qual não se deve mandar a mensagem
-                host, port = dic[person][0], dic[person][1]
-                print(host, port)
+                host, port = dic[person][0], dic[person][1]               
                 socket_ = socket(AF_INET, SOCK_STREAM)
                 socket_.connect((host, port))
                 socket_.sendall(str(self.port).encode())
